@@ -4,7 +4,7 @@ moxie-c-emulator
 
 C Emulator of the Moxie Processor core.
 Adapted from the gdb simulator sources.
-Tested with rom code from MoxieLite repo from toptensoftware.
+Tested with rom code from MoxieLite repo by toptensoftware.
 
 
  For details on the Moxie architecture and project, see the project wiki
