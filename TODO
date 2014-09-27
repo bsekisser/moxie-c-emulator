@@ -8,4 +8,6 @@ Impliment Banked Access (MMU mode);
 
 Improve emulation performance.
 	Tailor read write specific functions.
-	
+
+Fix little endian mode for simple compiler.
+
