@@ -21,8 +21,9 @@
 
 #include <stdint.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <stdlib.h> // exit, free, malloc, realloc
+#include <stdio.h> // printf
+#include <fcntl.h> // open permissions
 
 #include "libmoxie-config.h"
 
@@ -65,11 +66,11 @@ void set_initial_gprs(moxie_p moxie)
 			goto do_branch; \
 	} break;
 
-#define EXCEPTION(trace_msg, the_exception) \
+#define EXCEPTION(trace_msg, the_exception, delta_pc) \
 	do { \
 		moxie->exception.msg = trace_msg; \
 		moxie->exception.id = the_exception; \
-		PC -= 2; /* set pc back to the position which cased the exception */\
+		PC -= delta_pc; /* set pc back to the position which cased the exception */\
 	} while(0);
 
 static moxie_inst_form3(moxie_p moxie, uint16_t inst)
@@ -88,7 +89,7 @@ static moxie_inst_form3(moxie_p moxie, uint16_t inst)
 		OPCODE_ESAC_BRCS(bgeu, CC_GTU | CC_EQ);
 		OPCODE_ESAC_BRCS(bleu, CC_LTU | CC_EQ);
 		default: {
-			EXCEPTION("SIGILL3", SIGILL);
+			EXCEPTION("SIGILL3", SIGILL, 2);
 		} break;
 	}
 	return;
@@ -119,7 +120,7 @@ static void moxie_inst_form2(moxie_p moxie, uint16_t inst)
 		} break;
 		/* getting here is theoretically impossible */
 		default: {
-			EXCEPTION("SIGILL2", SIGILL);
+			EXCEPTION("SIGILL2", SIGILL, 2);
 		} break;
 	}
 }
@@ -219,8 +220,107 @@ static void moxie_inst_form2(moxie_p moxie, uint16_t inst)
 		} break;
 #endif
 
+#define MOXIE_O_WRONLY	0x0001
+#define MOXIE_O_RDWR	0x0002
+#define MOXIE_O_APPEND	0x0008
+#define MOXIE_O_CREAT	0x0200
+#define MOXIE_O_TRUNC	0x0400
+#define MOXIE_O_EXCL	0x0800
+#define MOXIE_O_SYNC	0x2000
+
+static void moxie_convert_flag(
+	uint32_t *target_flags,
+	uint32_t *host_flags,
+	uint32_t target_flag,
+	uint32_t host_flag)
+{
+	if(*target_flags & target_flag) {
+		*host_flags |= host_flag;
+		*target_flags ^= target_flag;
+	}
+}
+
+#define CONVERT_FLAG(flag) \
+	moxie_convert_flag(&target_flags, &host_flags, MOXIE_##flag, flag);
+
+static int moxie_convert_target_flags(uint32_t flags)
+{
+	uint32_t target_flags = flags;
+	uint32_t host_flags = 0;
+
+	CONVERT_FLAG(O_WRONLY);
+	CONVERT_FLAG(O_RDWR);
+	CONVERT_FLAG(O_APPEND);
+	CONVERT_FLAG(O_CREAT);
+	CONVERT_FLAG(O_TRUNC);
+	CONVERT_FLAG(O_EXCL);	
+	CONVERT_FLAG(O_SYNC);
+	
+	if(target_flags != 0) {
+		printf("%s: problem converting target open flags for host. 0x%08x\n", 
+			__FUNCTION__, target_flags);
+		exit(-1);
+	}
+	
+	return(host_flags);
+}
+
+enum {
+	MOXIE_SYS_EXIT = 1,
+	MOXIE_SYS_OPEN,
+	MOXIE_SYS_READ = 4,
+	MOXIE_SYS_WRITE,
+};
+
 static moxie_inst_form1_swi(moxie_p moxie, uint16_t inst)
 {
+	uint32_t inum = moxie_fetch_post_increment(moxie, &PC, 4);
+
+	SREG(2) = 3;
+	SREG(3) = inum;
+	switch(inum) {
+		case	MOXIE_SYS_EXIT: {
+			EXCEPTION("SWI_SYS_EXIT", SIGQUIT, 6);
+		} break;
+		case	MOXIE_SYS_OPEN: {
+			char		*fname = &moxie->data[R(2)];
+			int		mode = moxie_convert_target_flags(R(3));
+			int		perm = R(4);
+
+			R(2) = open(fname, mode, perm);
+		} break;
+		case	MOXIE_SYS_READ: {
+			int		fd = R(2);
+			uint32_t	len = R(4);
+			uint8_t		*dst = &moxie->data[R(3)];
+			
+			R(2) = read(fd, dst, len);
+		} break;
+		case	MOXIE_SYS_WRITE: {
+			int		fd = R(2);
+			uint32_t	len = R(4);
+			uint8_t		*src = &moxie->data[R(3)];
+			
+			R(2) = write(fd, src, len);
+		} break;
+		case	-1: { /* Linux System Call */
+			uint32_t	handler = SREG(1);
+			
+			/* Save a slot for the static chain. */
+			SP -= 4;
+			/* Push the return address */
+			moxie_push32(moxie, PC);
+			/* Push the current frame pointer */
+			moxie_push32(moxie, FP);
+			/* Set new frame pointer */
+			FP = SP;
+			/* Set new pc */
+			/* gdb moxie sim sets pc = handler - 6
+				so far jmps/jsrs have been absolute...
+				which is correct??? */
+			PC = handler;
+		} break;
+	}
 }
 
 static moxie_inst_form1(moxie_p moxie, uint16_t inst)
@@ -228,7 +328,7 @@ static moxie_inst_form1(moxie_p moxie, uint16_t inst)
 	uint8_t opcode = get_form1_opcode(inst);
 	switch(opcode) {
 		case opcode_bad_0: {
-			EXCEPTION("SIGILL0", SIGILL);
+			EXCEPTION("SIGILL0", SIGILL, 2);
 		} break;
 		ESAC_OPCODE_LDI("ldi.l", l, -1L);
 		ESAC_OPCODE_A4RMW_B4V_ALU("mov", mov, =);
@@ -280,7 +380,7 @@ static moxie_inst_form1(moxie_p moxie, uint16_t inst)
 		case opcode_bad_16:
 		case opcode_bad_17:
 		case opcode_bad_18: {
-			EXCEPTION("SIGILL0", SIGILL);
+			EXCEPTION("SIGILL0", SIGILL, 2);
 		} break;
 		ESAC_OPCODE_JSR("jsr", jsr, get_form1_a4v(inst), av);
 		ESAC_OPCODE_JMP("jmpa", jmpa, get_i32(inst), ival);
@@ -313,7 +413,7 @@ static moxie_inst_form1(moxie_p moxie, uint16_t inst)
 		ESAC_OPCODE_A4RMW_B4V_ALU_SIGNED("mod.l", mod_l, %);
 		ESAC_OPCODE_A4RMW_B4V_ALU("umod.l", umod_l, %=);
 		case opcode_brk: {
-			EXCEPTION("brk", SIGTRAP);
+			EXCEPTION("brk", SIGTRAP, 2);
 		} break;
 
 		ESAC_OPCODE_LDO("ldo.b", b, 8);
@@ -330,7 +430,7 @@ static moxie_inst_form1(moxie_p moxie, uint16_t inst)
 				}
 			} else
 #endif
-				EXCEPTION("SIGILL1", SIGILL);
+				EXCEPTION("SIGILL1", SIGILL, 2);
 		} break;
 	}
 }

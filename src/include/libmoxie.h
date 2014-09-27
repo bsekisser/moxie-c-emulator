@@ -74,6 +74,7 @@ enum {
 };
 
 #define R(x) moxie->regs[x]
+#define SREG(x) moxie->sregs[x]
 
 #define FP R(rFP)
 #define PC R(rPC)
