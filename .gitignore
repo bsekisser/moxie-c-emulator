@@ -28,15 +28,3 @@
 *.x86_64
 *.hex
 
-# autoconf stuff
-autom4te.cache
-configure
-configure.in
-aclocal.m4
-config.status
-depcomp
-install.sh
-Makefile
-Makefile.in
-missing
-stamp-h1
