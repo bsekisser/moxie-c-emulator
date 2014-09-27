@@ -34,7 +34,7 @@
 void main(int arc, char *argv[])
 {
 	int trace = 1;
-	uint32_t data_size = MiB(16);
+	uint32_t data_size = KiB(64);
 
 	moxie_t run_moxie;
 	run_moxie.data = 0;
@@ -58,7 +58,7 @@ void main(int arc, char *argv[])
 	double target_ipsec = MHz(10.0);
 	uint16_t run_cycles = 65535;
 	uint64_t run_dtime = 0;
-		
+
 	printf("\n\n");
 	
 	while(!moxie->exception.id) {
@@ -114,8 +114,8 @@ void main(int arc, char *argv[])
 	printf("\n\n");
 
 	if(moxie->exception.id)
-		printf("%s: Stopped with exception (%d) %s.\n", 
-			__FUNCTION__, moxie->exception.id, moxie->exception.msg);
+		printf("%s: Stopped at PC: 0x%08x with exception (%d) %s\n", 
+			__FUNCTION__, PC, moxie->exception.id, moxie->exception.msg);
 
 	printf("\n\n");
 }

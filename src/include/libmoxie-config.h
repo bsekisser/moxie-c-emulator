@@ -30,5 +30,7 @@
 
 #undef CONFIG_MOXIE_LE
 
+#define CONFIG_MOXIE_TRAP_PC_NON_WORD_BOUNDRY
+
 #endif /* __LIBMOXIE_CONFIG_H__ */
 

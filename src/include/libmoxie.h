@@ -35,8 +35,8 @@ typedef struct moxie_t {
 	uint32_t	data_size;
 
 	struct {
-		char	*msg;
-		int	id;
+		const char	*msg;
+		int		id;
 	}exception;
 	
 	uint32_t	start_pc;

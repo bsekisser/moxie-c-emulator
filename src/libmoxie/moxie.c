@@ -342,6 +342,13 @@ void inline moxie_run_one(moxie_p moxie)
 		exit(-1);
 	}
 
+#ifdef CONFIG_MOXIE_TRAP_PC_NON_WORD_BOUNDRY
+	if(PC & 1) {
+		printf("%s: pc address (%08x) not on word boundry.\n", __FUNCTION__, PC);
+		exit(-1);
+	}
+#endif
+
 	uint16_t inst = moxie_fetch_post_increment(moxie, &PC, 2);
 
 #ifdef CONFIG_MOXIE_USE_SWTICH_LOOP
@@ -365,22 +372,15 @@ uint64_t moxie_run_count(moxie_p moxie, uint16_t count)
 	uint64_t start_time = profiler_get_dtime();
 
 #ifdef CONFIG_MOXIE_BUILD_TRACE
-	int saved_signal = moxie->exception.id;
-	moxie->exception.id = moxie->trace ? SIGTRAP : 0;	
-#endif
-
-	do {
-		moxie_run_one(moxie);
-		count--;
-	} while(!moxie->exception.id && count);
-
-#ifdef CONFIG_MOXIE_BUILD_TRACE
 	if(moxie->trace_hook && moxie->trace) {
 		moxie->trace_hook(moxie, PC, 0);
-		if(moxie->exception.id == SIGTRAP)
-			moxie->exception.id = saved_signal;
-	}
+		moxie_run_one(moxie);
+	} else
 #endif
+		do {
+			moxie_run_one(moxie);
+			count--;
+		} while(!moxie->exception.id && count);
 
 	return(profiler_get_elapsed_dtime(start_time));
 }
@@ -417,7 +417,9 @@ moxie_p moxie_init(moxie_p user_moxie, uint32_t data_size, int trace)
 	set_initial_gprs(moxie);
 
 	moxie->exception.id = 0;
+	moxie->exception.msg = "";
 	moxie->insts = 0;
+	moxie->trace = trace;
 
 #ifdef CONFIG_MOXIE_BUILD_TRACE
 	if(trace)

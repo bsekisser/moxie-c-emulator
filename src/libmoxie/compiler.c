@@ -40,8 +40,7 @@ void c_form1_opcode(moxie_p moxie, uint8_t opcode, char *opname)
 {
 	uint32_t trace_pc = PC;
 
-	c(opcode & 0x3f);
-	c(0);
+	c16((opcode & 0x3f) << 8);
 
 	TRACE();
 }
@@ -51,8 +50,10 @@ void c_form1abi_opcode(moxie_p moxie, uint8_t opcode, char *opname,
 {
 	uint32_t trace_pc = PC;
 
-	c(opcode & 0x3f);
-	c( ((ra_dst & 0xf) << 4) | (rb_src & 0xf) );
+	uint16_t dval_out = (opcode & 0x3f) << 8;
+	dval_out |= ((ra_dst & 0xf) << 4) | (rb_src & 0xf);
+
+	c16(dval_out);
 	c32(ival);
 
 	TRACE();
@@ -63,8 +64,10 @@ void c_form1ai_opcode(moxie_p moxie, uint8_t opcode, char *opname,
 {
 	uint32_t trace_pc = PC;
 
-	c(opcode & 0x3f);
-	c( (ra_dst & 0xf) << 4 );
+	uint16_t dval_out = (opcode & 0x3f) << 8;
+	dval_out |= ((ra_dst & 0xf) << 4);
+	
+	c16(dval_out);
 	c32(ival);
 
 	TRACE();
@@ -74,8 +77,9 @@ void c_form1i_opcode(moxie_p moxie, uint8_t opcode, char *opname, uint32_t ival)
 {
 	uint32_t trace_pc = PC;
 	
-	c(opcode & 0x3f);
-	c(0);
+	uint16_t dval_out = (opcode & 0x3f) << 8;
+	
+	c16(dval_out);
 	c32(ival);
 	
 	TRACE();
@@ -85,8 +89,10 @@ void c_form1ab_opcode(moxie_p moxie, uint8_t opcode, char *opname, int ra_dst, i
 {
 	uint32_t trace_pc = PC;
 
-	c(opcode & 0x3f);
-	c( ((ra_dst & 0xf) << 4) | (rb_src & 0xf) );
+	uint16_t dval_out = (opcode & 0x3f) << 8;
+	dval_out |= ((ra_dst & 0xf) << 4) | (rb_src & 0xf);
+
+	c16(dval_out);
 
 	TRACE();
 }
@@ -95,8 +101,10 @@ void c_form2av_opcode(moxie_p moxie, uint8_t opcode, char *opname, int ra_dst, i
 {
 	uint32_t trace_pc = PC;
 
-	c(0x80 | ((opcode & 0x3) << 4) | (ra_dst & 0xf));
-	c(ival);
+	uint16_t dval_out = (0x80 | ((opcode & 0x3) << 4) | (ra_dst & 0xf)) << 8;
+	dval_out |= ival;
+	
+	c16(dval_out);
 	
 	TRACE();
 }

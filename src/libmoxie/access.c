@@ -147,10 +147,8 @@ void moxie_store_post_increment(moxie_p moxie, uint32_t *addr, uint32_t dval, in
 
 void moxie_store_pre_decrement(moxie_p moxie, uint32_t *addr, uint32_t dval, int len)
 {
-	uint32_t	new_addr = *addr - len;
-	
-	moxie_store(moxie, new_addr, dval, len);
-	(*addr) = new_addr;
+	(*addr) -= len;
+	moxie_store(moxie, *addr, dval, len);
 }
 
 void moxie_push32(moxie_p moxie, uint32_t data)
