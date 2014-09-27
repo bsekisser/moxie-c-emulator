@@ -1,0 +1,10 @@
+License...  soucres by me are being distributed as noted in COPYING.
+	sources and other files redistributed here are covered to by their 
+		respective license as deemed appropriate by their authors.
+		if you have any questions concerning those sources refer to 
+		their residing distribution for furthur information.
+
+Hyphes (or Dashes) vs Underscore debate...
+	Use Underscores.  try using dashes in names with autotools...
+	let me know if you figure it out okay?..
+

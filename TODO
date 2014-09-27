@@ -1,0 +1,11 @@
+Finish translating test rom to simple compiler.
+
+Impliment SWI functions.
+
+Impliment MMU mode.
+
+Impliment Banked Access (MMU mode);
+
+Improve emulation performance.
+	Tailor read write specific functions.
+	
