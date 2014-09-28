@@ -36,15 +36,6 @@
 			moxie->trace_hook(moxie, trace_pc, 1); \
 	} while(0);
 
-void c_form1_opcode(moxie_p moxie, uint8_t opcode, char *opname)
-{
-	uint32_t trace_pc = PC;
-
-	c16((opcode & 0x3f) << 8);
-
-	TRACE();
-}
-
 void c_form1abi_opcode(moxie_p moxie, uint8_t opcode, char *opname,
 	int ra_dst, int rb_src,	uint32_t ival)
 {
@@ -56,32 +47,6 @@ void c_form1abi_opcode(moxie_p moxie, uint8_t opcode, char *opname,
 	c16(dval_out);
 	c32(ival);
 
-	TRACE();
-}
-
-void c_form1ai_opcode(moxie_p moxie, uint8_t opcode, char *opname,
-	int ra_dst, uint32_t ival)
-{
-	uint32_t trace_pc = PC;
-
-	uint16_t dval_out = (opcode & 0x3f) << 8;
-	dval_out |= ((ra_dst & 0xf) << 4);
-	
-	c16(dval_out);
-	c32(ival);
-
-	TRACE();
-}
-
-void c_form1i_opcode(moxie_p moxie, uint8_t opcode, char *opname, uint32_t ival)
-{
-	uint32_t trace_pc = PC;
-	
-	uint16_t dval_out = (opcode & 0x3f) << 8;
-	
-	c16(dval_out);
-	c32(ival);
-	
 	TRACE();
 }
 
@@ -97,7 +62,7 @@ void c_form1ab_opcode(moxie_p moxie, uint8_t opcode, char *opname, int ra_dst, i
 	TRACE();
 }
 
-void c_form2av_opcode(moxie_p moxie, uint8_t opcode, char *opname, int ra_dst, int ival)
+void c_form2av_opcode(moxie_p moxie, uint8_t opcode, char *opname, int ra_dst, uint8_t ival)
 {
 	uint32_t trace_pc = PC;
 
