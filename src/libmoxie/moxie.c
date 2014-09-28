@@ -220,14 +220,6 @@ static void moxie_inst_form2(moxie_p moxie, uint16_t inst)
 		} break;
 #endif
 
-#define MOXIE_O_WRONLY	0x0001
-#define MOXIE_O_RDWR	0x0002
-#define MOXIE_O_APPEND	0x0008
-#define MOXIE_O_CREAT	0x0200
-#define MOXIE_O_TRUNC	0x0400
-#define MOXIE_O_EXCL	0x0800
-#define MOXIE_O_SYNC	0x2000
-
 static void moxie_convert_flag(
 	uint32_t *target_flags,
 	uint32_t *host_flags,
@@ -264,13 +256,6 @@ static int moxie_convert_target_flags(uint32_t flags)
 	
 	return(host_flags);
 }
-
-enum {
-	MOXIE_SYS_EXIT = 1,
-	MOXIE_SYS_OPEN,
-	MOXIE_SYS_READ = 4,
-	MOXIE_SYS_WRITE,
-};
 
 static moxie_inst_form1_swi(moxie_p moxie, uint16_t inst)
 {

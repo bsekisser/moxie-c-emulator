@@ -175,5 +175,22 @@ enum {
 #define get_i32(inst) \
 	const uint32_t ival = moxie_fetch_post_increment(moxie, &PC, 4); \
 
+#define MOXIE_O_WRONLY	0x0001
+#define MOXIE_O_RDWR	0x0002
+#define MOXIE_O_APPEND	0x0008
+#define MOXIE_O_CREAT	0x0200
+#define MOXIE_O_TRUNC	0x0400
+#define MOXIE_O_EXCL	0x0800
+#define MOXIE_O_SYNC	0x2000
+
+enum {
+	MOXIE_SYS_EXIT = 1,
+	MOXIE_SYS_OPEN,
+	MOXIE_SYS_CLOSE,	/* NOTE: NOT DEFINED IN GDB SIM...  INTENTIONAL OR NOT? */
+	MOXIE_SYS_READ = 4,
+	MOXIE_SYS_WRITE,
+};
+
+
 #endif /* __LIBMOXIE_OPCODE_H__ */
 
