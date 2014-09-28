@@ -42,7 +42,7 @@ void main(int arc, char *argv[])
 	
 	moxie_p moxie = moxie_init(&run_moxie, data_size, trace);
 	if(!moxie) {
-		printf("%s: Could not intialize moxie\n");
+		printf("%s: Could not intialize moxie\n", __FUNCTION__);
 		exit(-1);
 	}
 
