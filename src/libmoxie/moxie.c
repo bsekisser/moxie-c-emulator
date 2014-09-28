@@ -257,6 +257,8 @@ static int moxie_convert_target_flags(uint32_t flags)
 	return(host_flags);
 }
 
+#define MOXIE_CHECK_ERRNO(err_val, reg) /* FIXME: Not defined in gdb simulator */
+
 static moxie_inst_form1_swi(moxie_p moxie, uint16_t inst)
 {
 	uint32_t inum = moxie_fetch_post_increment(moxie, &PC, 4);
@@ -268,25 +270,34 @@ static moxie_inst_form1_swi(moxie_p moxie, uint16_t inst)
 			EXCEPTION("SWI_SYS_EXIT", SIGQUIT, 6);
 		} break;
 		case	MOXIE_SYS_OPEN: {
-			char		*fname = &moxie->data[R(2)];
-			int		mode = moxie_convert_target_flags(R(3));
-			int		perm = R(4);
+			char		*fname = &moxie->data[R(r0)];
+			int		mode = moxie_convert_target_flags(R(r1));
+			int		perm = R(r2);
 
-			R(2) = open(fname, mode, perm);
+			R(r0) = open(fname, mode, perm);
+			MOXIE_CHECK_ERRNO(-1, R(r0));
+		} break;
+		case	MOXIE_SYS_CLOSE: {
+			int		fd = R(r0);
+			
+			R(r0) = close(fd);
+			MOXIE_CHECK_ERRNO(-1, R(r0));
 		} break;
 		case	MOXIE_SYS_READ: {
-			int		fd = R(2);
-			uint32_t	len = R(4);
-			uint8_t		*dst = &moxie->data[R(3)];
+			int		fd = R(r0);
+			uint32_t	len = R(r2);
+			uint8_t		*dst = &moxie->data[R(r1)];
 			
-			R(2) = read(fd, dst, len);
+			R(r0) = read(fd, dst, len);
+			MOXIE_CHECK_ERRNO(-1, R(r0));
 		} break;
 		case	MOXIE_SYS_WRITE: {
-			int		fd = R(2);
-			uint32_t	len = R(4);
-			uint8_t		*src = &moxie->data[R(3)];
+			int		fd = R(r0);
+			uint32_t	len = R(r2);
+			uint8_t		*src = &moxie->data[R(r1)];
 			
-			R(2) = write(fd, src, len);
+			R(r0) = write(fd, src, len);
+			MOXIE_CHECK_ERRNO(-1, R(r0));
 		} break;
 		case	-1: { /* Linux System Call */
 			uint32_t	handler = SREG(1);
