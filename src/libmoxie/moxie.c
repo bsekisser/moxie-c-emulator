@@ -174,51 +174,31 @@ static void moxie_inst_form2(moxie_p moxie, uint16_t inst)
 #define ESAC_OPCODE_STO(trace_msg, esac, len) \
 	ESAC_OPCODE_ST_X(trace_msg, o_##esac, len, b4v_i32, ival + av, bv);
 
-#ifdef CONFIG_MOXIE_JUMPS_ABSOLUTE
-	#define ESAC_OPCODE_JMP(trace_msg, esac, regop, new_pc) \
-		case opcode_##esac: { \
-			regop; \
-			PC = new_pc; \
-		} break;
-#else
-	#define ESAC_OPCODE_JMP(trace_msg, esac, regop, new_pc) \
-		case opcode_##esac: { \
-			regop; \
-			PC = new_pc - 2; \
-		} break;
-#endif
+#define ESAC_OPCODE_JMP(trace_msg, esac, regop, new_pc) \
+	case opcode_##esac: { \
+		regop; \
+		PC = new_pc; \
+	} break;
 
-#ifdef CONFIG_MOXIE_JUMPS_ABSOLUTE
-	#define ESAC_OPCODE_JSR(trace_msg, esac, regop, new_pc) \
-		case opcode_##esac: { \
-			regop; \
-			/* Save a slot for the static chain. */ \
-			SP -= 4; \
-			/* Push the return address */ \
-			moxie_push32(moxie, PC); \
-			/* Push the current frame pointer */ \
-			moxie_push32(moxie, FP); \
-			/* Set new frame pointer */ \
-			FP = SP; \
-			/* Set new pc */ \
-			PC = new_pc; \
-		} break;
-#else
+#define MOXIE_OPCODE_JSR(new_pc) \
+	do { \
+		/* Save a slot for the static chain. */ \
+		SP -= 4; \
+		/* Push the return address */ \
+		moxie_push32(moxie, PC); \
+		/* Push the current frame pointer */ \
+		moxie_push32(moxie, FP); \
+		/* Set new frame pointer */ \
+		FP = SP; \
+		/* Set new pc */ \
+		PC = new_pc; \
+	}while(0);
+
 #define ESAC_OPCODE_JSR(trace_msg, esac, regop, new_pc) \
-		case opcode_##esac: { \
-			regop; \
-			/* Save a slot for the static chain. */ \
-			SP -= 4; \
-			/* Push the return address */ \
-			moxie_push32(moxie, PC); \
-			/* Push the current frame pointer */ \
-			moxie_push32(moxie, FP); \
-			/* Set new frame pointer */ \
-			FP = SP; \
-			/* Set new pc */ \
-			PC = new_pc - 2; \
-		} break;
-#endif
+	case opcode_##esac: { \
+		regop; \
+		MOXIE_OPCODE_JSR(new_pc); \
+	} break;
 
 static void moxie_convert_flag(
 	uint32_t *target_flags,
@@ -300,21 +280,7 @@ static moxie_inst_form1_swi(moxie_p moxie, uint16_t inst)
 			MOXIE_CHECK_ERRNO(-1, R(r0));
 		} break;
 		case	-1: { /* Linux System Call */
-			uint32_t	handler = SREG(1);
-			
-			/* Save a slot for the static chain. */
-			SP -= 4;
-			/* Push the return address */
-			moxie_push32(moxie, PC);
-			/* Push the current frame pointer */
-			moxie_push32(moxie, FP);
-			/* Set new frame pointer */
-			FP = SP;
-			/* Set new pc */
-			/* gdb moxie sim sets pc = handler - 6
-				so far jmps/jsrs have been absolute...
-				which is correct??? */
-			PC = handler;
+			MOXIE_OPCODE_JSR(SREG(1));
 		} break;
 	}
 }
@@ -367,8 +333,14 @@ static moxie_inst_form1(moxie_p moxie, uint16_t inst)
 		} break;
 		case opcode_nop: {
 		} break;
-		case opcode_bad_10:
-		case opcode_bad_11:
+		case opcode_sex_b: {
+			get_form1_a4_b4v(inst);
+			R(a) = ((int32_t)((int8_t)bv));
+		} break;
+		case opcode_sex_s: {
+			get_form1_a4_b4v(inst);
+			R(a) = ((int32_t)((int16_t)bv));
+		} break;
 		case opcode_bad_12:
 		case opcode_bad_13:
 		case opcode_bad_14:

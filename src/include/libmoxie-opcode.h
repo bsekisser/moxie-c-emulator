@@ -44,8 +44,8 @@
 	FORM1_INST_ESAC(sto_l, "sto.l", I32OvRa_vRb) \
 	FORM1_INST_ESAC(cmp, "cmp", vRa_vRb) \
 	FORM1_INST_ESAC(nop, "nop", Z) \
-	FORM1_INST_ESAC(bad_10, "bad_10", Z) \
-	FORM1_INST_ESAC(bad_11, "bad_11", Z) \
+	FORM1_INST_ESAC(sex_b, "sex.b", Ra_vRb) \
+	FORM1_INST_ESAC(sex_s, "sex.s", Ra_vRb) \
 	FORM1_INST_ESAC(bad_12, "bad_12", Z) \
 	FORM1_INST_ESAC(bad_13, "bad_13", Z) \
 	FORM1_INST_ESAC(bad_14, "bad_14", Z) \
